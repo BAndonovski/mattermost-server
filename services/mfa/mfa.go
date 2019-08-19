@@ -6,7 +6,6 @@ package mfa
 import (
 	"crypto/rand"
 	b32 "encoding/base32"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -74,9 +73,8 @@ func (m *Mfa) GenerateRecovery(user *model.User) ([]string, *model.AppError) {
 	for i := range codes {
 		codes[i] = generateCode(10)
 	}
-	jsonCodes, _ := json.Marshal(codes)
 
-	if err := m.Store.User().UpdateMfaRecovery(user.Id, string(jsonCodes)); err != nil {
+	if err := m.Store.User().UpdateMfaRecovery(user.Id, codes); err != nil {
 		return nil, model.NewAppError("GenerateRecovery", "mfa.generate_recovery.save_codes", nil, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -90,29 +88,6 @@ func (m *Mfa) LoginWithRecovery(user *model.User, code string) *model.AppError {
 
 	if !user.MfaActive {
 		return model.NewAppError("Recovery Codes Error", "mfa.login_with_recovery.mfa_inactive", nil, "MFA inactive", http.StatusInternalServerError)
-	}
-
-	var codes []string
-	if err := json.Unmarshal([]byte(user.MfaRecovery), &codes); err != nil {
-		return model.NewAppError("Recovery Codes Error", "mfa.login_with_recovery.read_codes", nil, err.Error(), http.StatusInternalServerError)
-	}
-
-	found := false
-	for i, c := range codes {
-		if c == code {
-			found = true
-			codes = append(codes[:i], codes[i+1:]...)
-			break
-		}
-	}
-
-	if !found {
-		return model.NewAppError("Recovery Codes Error", "mfa.generate_recovery.code_not_found", nil, "Code not found", http.StatusInternalServerError)
-	}
-
-	jsonCodes, _ := json.Marshal(codes)
-	if err := m.Store.User().UpdateMfaRecovery(user.Id, string(jsonCodes)); err != nil {
-		return model.NewAppError("GenerateRecovery", "mfa.generate_recovery.save_codes", nil, err.Error(), http.StatusInternalServerError)
 	}
 
 	return nil

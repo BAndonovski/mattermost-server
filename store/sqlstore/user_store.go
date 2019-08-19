@@ -168,7 +168,6 @@ func (us SqlUserStore) Update(user *model.User, trustedUpdateData bool) (*model.
 	user.FailedAttempts = oldUser.FailedAttempts
 	user.MfaSecret = oldUser.MfaSecret
 	user.MfaActive = oldUser.MfaActive
-	user.MfaRecovery = oldUser.MfaRecovery
 
 	if !trustedUpdateData {
 		user.Roles = oldUser.Roles
@@ -314,12 +313,12 @@ func (us SqlUserStore) UpdateMfaActive(userId string, active bool) *model.AppErr
 	return nil
 }
 
-func (us SqlUserStore) UpdateMfaRecovery(userId string, codes string) *model.AppError {
-	updateAt := model.GetMillis()
+func (us SqlUserStore) UpdateMfaRecovery(userId string, codes []string) *model.AppError {
+	// updateAt := model.GetMillis()
 
-	if _, err := us.GetMaster().Exec("UPDATE Users Set MfaRecovery = :codes, UpdateAt = :UpdateAt WHERE Id = :UserId", map[string]interface{}{"codes": codes, "UpdateAt": updateAt, "UserId": userId}); err != nil {
-		return model.NewAppError("SQLUserStore.UpdateMfaRecovery", "store.sql_user.update_mfra_recovery.app_error", nil, "id="+userId+", "+err.Error(), http.StatusInternalServerError)
-	}
+	// if _, err := us.GetMaster().Exec("UPDATE Users Set MfaRecovery = :codes, UpdateAt = :UpdateAt WHERE Id = :UserId", map[string]interface{}{"codes": codes, "UpdateAt": updateAt, "UserId": userId}); err != nil {
+	// 	return model.NewAppError("SQLUserStore.UpdateMfaRecovery", "store.sql_user.update_mfra_recovery.app_error", nil, "id="+userId+", "+err.Error(), http.StatusInternalServerError)
+	// }
 	return nil
 }
 
